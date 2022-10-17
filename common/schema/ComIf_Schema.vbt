@@ -1,0 +1,73 @@
+﻿.usedmodule ComIf
+.Imports System
+.Imports System.Collections.Generic
+.Imports System.Xml.Serialization
+.Imports System.IO
+.
+.Public Class TxMessage
+.    Public Property Name As String = ""
+.    Public Property ID As UInteger = 0
+.    Public Property Length As UInteger = 1
+.    Public Property TxConfCallback As String = ""
+.    Public Property TxCallback As String = ""
+.    Public Property ChecksumLength As String = ""
+.    Public Property EnableAggregation As String = ""
+.End Class
+.
+.Public Class RxMessage
+.    Public Property Name As String = ""
+.    Public Property ID As UInteger = 0
+.    Public Property Length As UInteger = 1
+.    Public Property RxCallback As String = ""
+.    Public Property ChecksumLength As String = ""
+.End Class
+.
+.Public Class Channel
+.    Public Property Name As String = ""
+.    Public Property TransmitBufferSize As UInteger = 144
+.    Public Property DataTransferMethod As String = ""
+.    Public Property TransmitFunction As String = ""
+.    Public Property ErrorNotification As String = ""
+.    Public Property EnableDynamicDataLength As String = ""
+.    Public Property MaxDynamicDataLength As UInteger = 0
+.    Public Property TxMessages As New List(Of TxMessage)
+.    Public Property RxMessages As New List(Of RxMessage)
+.    Public Property EnableAggregation As String = ""
+.    Public Property AggregationTxCycle As UInteger = 100
+.    Public Property AggregationBufferLimit As UInteger = 0
+.    Public Property RequestReceptionFunction As String = ""
+.    Public Property RequestReceptionTimeout As UInteger = 100
+.End Class
+.
+.Public Class tComIfGeneral
+.	 Public Property CommonLengthVerification As String = "true"
+.	 Public Property InputMethod As String = ""
+.    Public Property TxMainFunctionTimePeriod As UInteger = 10
+.    Public Property RxMainFunctionTimePeriod As UInteger = 10
+.End Class
+.
+.Public Class tComIfConfig
+.    Public Property Channels As New List(Of Channel)
+.End Class
+.
+.Public Class ComIf
+.    Public Property Config As New tComIfConfig
+.    Public Property General As New tComIfGeneral
+.End Class
+.
+.Public Module ComIf_Project_Global
+.
+.    Public pComIf As ComIf = Nothing
+.
+.    Public Sub AddComIfModule(ByVal FilePath As String)
+.        Try
+.            Dim serializer As New XmlSerializer(GetType(ComIf))
+.            Dim fs As New FileStream(FilePath, FileMode.Open)
+.            pComIf = CType(serializer.Deserialize(fs), ComIf)
+.        Catch ex As Exception
+.            Console.WriteLine("ERROR: Exception while accessing " + FilePath)
+.            Console.WriteLine(ex.Message)
+.        End Try
+.    End Sub
+.
+.End Module

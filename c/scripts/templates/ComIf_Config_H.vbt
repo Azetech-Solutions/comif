@@ -1,0 +1,379 @@
+.imports system
+.imports system.io
+.Imports System.Collections.Generic
+.public module ComIf_Config_H_VBT
+
+.output ComIf_Config.h
+.sw.writeline(CopyRightsComments())
+#ifndef __COMIF_CONFIG_H__
+#define __COMIF_CONFIG_H__
+
+#include "Platform_Types.h"
+#include "ComIf_Config_Elements.h"
+
+/*************************************************/
+/* Functional Switches and Parameter Definitions */
+/*************************************************/
+
+/* Invalid Index handle */
+#define P_COMIF_INVALID_HANDLE                255u
+
+/* ComIf Input Method */
+#define S_COMIF_INPUT_METHOD                  COMIF_INPUT_METHOD_$(pComIf.General.InputMethod.ToUpper())
+
+#define COMIF_MAX_SUPPORTED_DLC               255 // 255 Bytes
+
+#define COMIF_MAX_SUPPORTED_CHKLEN            1   // 1 Byte
+
+#define COMIF_TX_MAIN_FUNCTION_PERIOD         $(pComIf.General.TxMainFunctionTimePeriod)
+
+#define COMIF_RX_MAIN_FUNCTION_PERIOD         $(pComIf.General.RxMainFunctionTimePeriod)
+
+/*************************************************/
+/*               Macro Definitions               */
+/*************************************************/
+.Dim IsDynamicDLCEnabled As Boolean = False
+.Dim AtleastOneChannelEnabledForAggregation As Boolean = False
+.Dim AtleastOneChannelHasReceptionRequest As Boolean = False
+.Dim AggregatedMsgCount As UInteger = 0
+.Dim msgIndex As UInteger = 0
+.For Each myChannel as Channel in pComIf.Config.Channels
+. If CBool(myChannel.EnableDynamicDataLength) = True Then
+.  IsDynamicDLCEnabled = True
+
+#if COMIF_MAX_SUPPORTED_DLC < $(myChannel.MaxDynamicDataLength)
+#error "The channel $(myChannel.Name) has more data length in the dynamic section than the supported DLC"
+#endif
+. End If
+. AggregatedMsgCount = 0
+. If ComIf_Get_TxMsgCount(myChannel) > 0 Then
+
+/* Transmit Message constants for the channel : $(myChannel.Name) */
+#define P_COMIF_TXBUFFER_SIZE_$(myChannel.Name.ToUpper())                    $(myChannel.TransmitBufferSize)u
+. For Each myTxMsg as TxMessage in myChannel.TxMessages
+
+/* Constants for the Tx message $(myTxMsg.Name) on $(myChannel.Name) channel */
+
+#define ComIf_GetIndex_$(myChannel.Name)_$(myTxMsg.Name)()                   ($(msgIndex)u)
+#define ComIf_GetLength_$(myChannel.Name)_$(myTxMsg.Name)()                  ($(myTxMsg.Length)u)
+#define ComIf_GetShadowBuffer_$(myChannel.Name)_$(myTxMsg.Name)()            ((UBYTE *)ComIf_ShadowBuffer_$(myChannel.Name)_$(myTxMsg.Name))
+#define ComIf_Transmit_$(myChannel.Name)_$(myTxMsg.Name)(x, y)               ComIf_Transmit(C_ComIfChannel_$(myChannel.Name), $(msgIndex), ((void *)x), y)
+#define ComIf_ForceTransmit_$(myChannel.Name)_$(myTxMsg.Name)(x, y)          do{ComIfTxMsgCfg_$(myChannel.Name)[$(msgIndex)].TxFlags.ForceTransmit = TRUE; ComIf_Transmit(C_ComIfChannel_$(myChannel.Name), $(msgIndex), ((void *)x), y); } while(0)
+#define ComIf_UpdateTxShadowBuffer_$(myChannel.Name)_$(myTxMsg.Name)(x, y)   ComIf_UpdateTxShadowBuffer(C_ComIfChannel_$(myChannel.Name), $(msgIndex), ((void *)x), y)
+.   If (myTxMsg.Length = 0) Then
+#define ComIf_SetDynamicLength_$(myChannel.Name)_$(myTxMsg.Name)(x)          (ComIfTxMsgCfg_$(myChannel.Name)[$(msgIndex)].DynLength = x)
+#define ComIf_GetDynamicLength_$(myChannel.Name)_$(myTxMsg.Name)()           (ComIfTxMsgCfg_$(myChannel.Name)[$(msgIndex)].DynLength)
+.   Else
+#define ComIf_TransmitFromBuffer_$(myChannel.Name)_$(myTxMsg.Name)()         ComIf_Transmit_$(myChannel.Name)_$(myTxMsg.Name)(ComIf_ShadowBuffer_$(myChannel.Name)_$(myTxMsg.Name), $(myTxMsg.Length))
+#define ComIf_ForceTransmitFromBuffer_$(myChannel.Name)_$(myTxMsg.Name)()    ComIf_ForceTransmit_$(myChannel.Name)_$(myTxMsg.Name)(ComIf_ShadowBuffer_$(myChannel.Name)_$(myTxMsg.Name), $(myTxMsg.Length))
+.   End If
+
+/* Debug Measurement Variables for $(myTxMsg.Name) on $(myChannel.Name) */
+
+/* [[DEBUG_MEASUREMENT */
+/* NAME=ComIfTxMsgCfg_$(myChannel.Name)[$(msgIndex)].TxFlags.PendingForTransmission */
+/* MODELNAME=ComIfTxMsgCfg_$(myChannel.Name)_$(myTxMsg.Name)_PendingForTransmission */
+/* SIZE=1 */
+/* HEADER=ComIf_Config.h */
+/* DEBUG_MEASUREMENT]] */
+
+/* [[DEBUG_MEASUREMENT */
+/* NAME=ComIfTxMsgCfg_$(myChannel.Name)[$(msgIndex)].TxFlags.PendingForConfirmation */
+/* MODELNAME=ComIfTxMsgCfg_$(myChannel.Name)_$(myTxMsg.Name)_PendingForConfirmation */
+/* SIZE=1 */
+/* HEADER=ComIf_Config.h */
+/* DEBUG_MEASUREMENT]] */
+
+/* [[DEBUG_MEASUREMENT */
+/* NAME=ComIfTxMsgCfg_$(myChannel.Name)[$(msgIndex)].TxFlags.AggregatedInBuffer */
+/* MODELNAME=ComIfTxMsgCfg_$(myChannel.Name)_$(myTxMsg.Name)_AggregatedInBuffer */
+/* SIZE=1 */
+/* HEADER=ComIf_Config.h */
+/* DEBUG_MEASUREMENT]] */
+
+. msgIndex += 1
+. If CBool(myTxMsg.EnableAggregation) = True Then
+.  If myTxMsg.Length = 0 Then
+#error "Transmit Aggregation is not supported for dynamic data length messages! Invalid configuration for the message $(myTxMsg.Name)"
+.  Else
+.   AggregatedMsgCount += 1
+.  End If
+. End If
+. Next
+. msgIndex = 0
+. End If
+. If ComIf_Get_RxMsgCount(myChannel) > 0 Then
+
+/* Receive Message constants for the channel : $(myChannel.Name) */
+. If myChannel.RequestReceptionFunction <> "" Then
+#define COMIF_RX_REQUEST_ENABLED_$(myChannel.Name.ToUpper())
+.  AtleastOneChannelHasReceptionRequest = True
+. End If
+. For Each myRxMsg as RxMessage in myChannel.RxMessages
+
+/* Constants for the Rx message $(myRxMsg.Name) on $(myChannel.Name) channel */
+
+#define ComIf_GetIndex_$(myChannel.Name)_$(myRxMsg.Name)()                   ($(msgIndex)u)
+#define ComIf_GetLength_$(myChannel.Name)_$(myRxMsg.Name)()                  ($(myRxMsg.Length)u)
+#define ComIf_GetBuffer_$(myChannel.Name)_$(myRxMsg.Name)()                  ((UBYTE *)ComIf_RxMessageBuffer_$(myChannel.Name)_$(myRxMsg.Name))
+#define ComIf_GetRxFlags_$(myChannel.Name)_$(myRxMsg.Name)()                 (ComIfRxMsgCfg_$(myChannel.Name)[$(msgIndex)].RxFlags)
+#define ComIf_IsNewMessageReceived_$(myChannel.Name)_$(myRxMsg.Name)()       ((ComIfRxMsgCfg_$(myChannel.Name)[$(msgIndex)].RxFlags.NewMessageReceived == TRUE) && (ComIfRxMsgCfg_$(myChannel.Name)[$(msgIndex)].RxFlags.ReceptionStarted == FALSE))
+#define ComIf_IsMessageReceptionHasError_$(myChannel.Name)_$(myRxMsg.Name)() (ComIfRxMsgCfg_$(myChannel.Name)[$(msgIndex)].RxFlags.ErrorInReception)
+#define ComIf_SetMessageProcessesed_$(myChannel.Name)_$(myRxMsg.Name)()      ComIf_SetMessageProcessed(&(ComIfRxMsgCfg_$(myChannel.Name)[$(msgIndex)].RxFlags))
+. If myChannel.RequestReceptionFunction <> "" Then
+#define ComIf_Rx_Request_$(myChannel.Name)_$(myRxMsg.Name)()                 ComIf_Rx_Request(C_ComIfChannel_$(myChannel.Name), $(msgIndex))
+#define ComIf_Rx_CancelRequest_$(myChannel.Name)_$(myRxMsg.Name)()           ComIf_Rx_CancelRequest(C_ComIfChannel_$(myChannel.Name), $(msgIndex))
+#define ComIf_Rx_IsRequested_$(myChannel.Name)_$(myRxMsg.Name)()             (ComIfRxMsgCfg_$(myChannel.Name)[$(msgIndex)].RxFlags.RxRequest == TRUE)
+. End If
+. msgIndex += 1
+. Next
+. msgIndex = 0
+. End If
+
+. If CBool(myChannel.EnableAggregation) = True Then
+.  If AggregatedMsgCount > 0 Then
+.    AtleastOneChannelEnabledForAggregation = True
+/* Tx Aggregation related macros */
+#define TX_AGGREGATION_ENABLED_$(myChannel.Name.ToUpper())
+
+/* Total Number of Aggregated messages */
+#define $(myChannel.Name.ToUpper())_TX_AGG_MSG_COUNT      $(AggregatedMsgCount)
+
+.   If CUInt(myChannel.AggregationTxCycle / pComIf.General.TxMainFunctionTimePeriod) = 0 Then
+#error "Invalid Aggregation Tx Cycle for the channel $(myChannel.Name). Correct the configuration!"
+.   Else
+/* Aggregation Cycle Count */
+#define $(myChannel.Name.ToUpper())_TX_AGG_CYCLE_COUNT    $(CUInt(myChannel.AggregationTxCycle / pComIf.General.TxMainFunctionTimePeriod))
+.   End If
+
+.   If (myChannel.AggregationBufferLimit = 0) Or (myChannel.AggregationBufferLimit >= myChannel.TransmitBufferSize) Then
+#error "Invalid Aggregation Buffer Limit for the channel $(myChannel.Name). It should be 0 < AggBufLimit < $(myChannel.TransmitBufferSize). Correct the configuration!"
+.   Else
+/* Aggregation Buffer Limit */
+#define $(myChannel.Name.ToUpper())_TX_AGG_BUFFER_LIMIT   $(myChannel.AggregationBufferLimit)
+.   End If
+
+.  Else
+#error "Channel level aggregation is enabled for $(myChannel.Name), but there are no messages enabled for aggregation. Correct the configuration!"
+.  End If
+. Else
+.  If AggregatedMsgCount > 0 Then
+#error "Message level aggregation is enabled without channel level aggregation in $(myChannel.Name). Correct the configuration!"
+.  End If
+. End If
+
+.Next
+
+. If IsDynamicDLCEnabled = True Then
+#define COMIF_DYNAMIC_DATA_LENGTH_ENABLED
+
+. End If
+. If AtleastOneChannelEnabledForAggregation = True Then
+#define COMIF_TX_AGGREGATION_ENABLED
+
+. End If
+. If AtleastOneChannelHasReceptionRequest = True Then
+#define COMIF_RX_REQUEST_ENABLED
+
+. End If
+/*************************************************/
+/*               Type Definitions                */
+/*************************************************/
+
+typedef struct __ComIfTxFlags
+{
+    /* This structure must not exceed 8 bytes */
+    
+    /* Control Bits */
+	UBYTE EnableAggregation      : 1; // If set, then the message will be aggregated instead of transmitting
+	UBYTE ForceTransmit          : 1; // If set, then the aggregation enabled messages will be sent directly
+	
+	/* Status Bits */
+	UBYTE PendingForTransmission : 1; // If set, then the message will be sent in next aggregation cycle
+	UBYTE AggregatedInBuffer     : 1; // If set, then the message has been copied to the channel data buffer
+	UBYTE PendingForConfirmation : 1; // If set, then the message will receive confirmation after the aggregation transmit cycle is completed
+	
+}ComIfTxFlags;
+
+typedef struct __ComIfTxMessageConfig
+{
+	UBYTE ID;
+	UBYTE Length;
+#ifdef COMIF_DYNAMIC_DATA_LENGTH_ENABLED
+	UBYTE DynLength;
+#endif
+	UBYTE ChecksumLength;
+	ComIfTxFlags TxFlags;
+	UBYTE * ShadowBuffer;
+	void (*TxConfCallback)(void);
+	UBYTE (*TxCallback)(UBYTE *, UBYTE *);
+}ComIfTxMessageConfig;
+
+typedef struct __ComIfRxFlags
+{
+    /* This structure must not exceed 8 bytes */
+    
+	/* Status Bits */
+	UBYTE ReceptionStarted   : 1; // If set, then the message has been started receiving
+	UBYTE NewMessageReceived : 1; // If set, then the message has been received completely and waiting for the RxCbk to be called
+	UBYTE ErrorInReception   : 1; // If set, then the message has been received, but there is an error in reception
+	UBYTE RxRequest          : 1; // If set, then the message is requested by the application
+	UBYTE RxRequestPlaced    : 1; // If set, then the message reception request has been placed to the underlying module
+	
+}ComIfRxFlags;
+
+typedef struct __ComIfRxMessageConfig
+{
+	UBYTE ID;
+	UBYTE Length;
+	UBYTE ChecksumLength;
+	ComIfRxFlags RxFlags;
+	UBYTE CurRxngIdx;
+	UBYTE * MessageBuffer;
+	void (*RxCallback)(UBYTE, UBYTE*);
+}ComIfRxMessageConfig;
+
+typedef enum __ComIf_ChannelType
+{
+.Dim channelIndex As UInteger = 0
+.For Each myChannel as Channel in pComIf.Config.Channels
+	C_ComIfChannel_$(myChannel.Name) = $(channelIndex),
+.channelIndex = channelIndex + 1 
+.Next
+
+	C_ComIfChannel_TOTAL = $(channelIndex)
+}ComIf_ChannelType;
+
+typedef UBYTE (*ComIf_ChannelTransmitType)(UWORD, void*);
+
+typedef void (*ComIf_ErrorNotificationType)(ULONG, ULONG);
+
+typedef UBYTE (*ComIf_ChannelRxRequestType)(UBYTE);
+
+typedef struct __ComIfChannelFlags
+{
+	/* Reception related flag */
+	UBYTE IsReceiving          : 1;
+	UBYTE Delimit              : 1;
+	UBYTE DLCVerified          : 1;
+	UBYTE IsRxRequestEnabled   : 1;
+	
+	UBYTE IsTransmitting       : 1;
+	UBYTE IsAggregationEnabled : 1;
+	UBYTE HasAggregatedMsgs    : 1;
+	
+}ComIfChannelFlags;
+
+#ifdef COMIF_TX_AGGREGATION_ENABLED
+typedef struct __ComIf_TxAggCtrl_t
+{
+	UWORD TxCycle;
+	UWORD TxCycleCounter;
+
+	UWORD BufferLimit;
+	UWORD CurrentBufferLength;
+	
+}ComIf_TxAggCtrl_t;
+#endif
+
+typedef struct __ComIf_ChannelConfigType
+{
+	ComIf_ChannelTransmitType Transmit;
+	ComIf_ErrorNotificationType ErrorCallback;
+
+#ifdef COMIF_RX_REQUEST_ENABLED
+	ComIf_ChannelRxRequestType RequestReception;
+	UWORD RxRequestTimeout;
+	UWORD RxRequestTimeoutCounter;
+#endif
+
+	UBYTE * TxBuffer;
+	UWORD TxBufferLength;
+	
+#ifdef COMIF_DYNAMIC_DATA_LENGTH_ENABLED
+	UBYTE DynamicMaxDataLength;
+#endif
+	UBYTE DataTxfrMethod;
+	
+	ComIfTxMessageConfig * TxMessages;
+	UBYTE TotalTxMessages;
+	
+	ComIfRxMessageConfig * RxMessages;
+	UBYTE TotalRxMessages;
+
+	UBYTE RxMsgIndex;
+	UBYTE RxMsgLength;
+	ComIfChannelFlags ChannelFlags;
+
+#ifdef COMIF_TX_AGGREGATION_ENABLED
+	ComIf_TxAggCtrl_t * TxAggCtrl;
+#endif
+	
+}ComIf_ChannelConfigType;
+
+/*************************************************/
+/*               Global Variables                */
+/*************************************************/
+
+extern ComIf_ChannelConfigType ComIf_ChannelConfig[];
+
+/* Channel Buffers and Configuration */
+.For Each myChannel as Channel in pComIf.Config.Channels
+
+/* For the Channel: $(myChannel.Name) */
+extern ComIfTxMessageConfig ComIfTxMsgCfg_$(myChannel.Name)[];
+extern UBYTE ComIfChannelTxBuffer_$(myChannel.Name)[];
+. If ComIf_Get_TxMsgCount(myChannel) > 0 Then
+. For Each myTxMsg as TxMessage in myChannel.TxMessages
+extern UBYTE ComIf_ShadowBuffer_$(myChannel.Name)_$(myTxMsg.Name)[];
+. Next
+.  If CBool(myChannel.EnableAggregation) = True Then
+#ifdef TX_AGGREGATION_ENABLED_$(myChannel.Name.ToUpper())
+extern ComIf_TxAggCtrl_t ComIf_TxAggCtrl_$(myChannel.Name);
+#endif
+.  End If
+. End If
+. If ComIf_Get_RxMsgCount(myChannel) > 0 Then
+extern ComIfRxMessageConfig ComIfRxMsgCfg_$(myChannel.Name)[];
+. For Each myRxMsg as RxMessage in myChannel.RxMessages
+extern UBYTE ComIf_RxMessageBuffer_$(myChannel.Name)_$(myRxMsg.Name)[];
+. Next
+. End If
+.Next
+
+/**********************************************************/
+/* Inline Function Definitions                            */
+/**********************************************************/
+
+static inline void ComIf_SetMessageProcessed(ComIfRxFlags * RxFlags)
+{
+	if(RxFlags != NULL)
+	{
+		RxFlags->NewMessageReceived = FALSE;
+#ifdef COMIF_RX_REQUEST_ENABLED
+		RxFlags->RxRequest = FALSE;
+		RxFlags->RxRequestPlaced = FALSE;
+#endif
+	}
+}
+
+/*************************************************/
+/*          Extern Function Declarations         */
+/*************************************************/
+
+extern UBYTE ComIf_Rx_Request(ComIf_ChannelType ChannelIndex, UBYTE MsgIndex);
+extern UBYTE ComIf_Rx_CancelRequest(ComIf_ChannelType ChannelIndex, UBYTE MsgIndex);
+
+/* Channel Specific Rx Indication Functions */
+.For Each myChannel as Channel in pComIf.Config.Channels
+. If myChannel.DataTransferMethod.ToUpper() = "STRING" Then
+extern UBYTE ComIf_RxIndication_$(myChannel.Name)(char * DataString, UWORD Length);
+. Else
+extern UBYTE ComIf_RxIndication_$(myChannel.Name)(UBYTE DataByte);
+. End If
+.Next
+
+#endif /* __COMIF_CONFIG_H__ */
+
+.endoutput
+.end module

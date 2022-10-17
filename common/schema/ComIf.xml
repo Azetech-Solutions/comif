@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<paramdef>
+  <name>ComIf</name>
+  <paramobject type="paramcontainer">
+    <name>Config</name>
+    <description>ComIf Config Container</description>
+    <lowermultiplicity>1</lowermultiplicity>
+    <uppermultiplicity>1</uppermultiplicity>
+    <paramobject type="listcontainer">
+      <name>Channels</name>
+      <description>List of Supported ComIf Channels</description>
+      <lowermultiplicity>1</lowermultiplicity>
+      <uppermultiplicity>1</uppermultiplicity>
+      <paramobject type="paramcontainer">
+        <name>Channel</name>
+        <description>ComIf Channel Definition</description>
+        <lowermultiplicity>1</lowermultiplicity>
+        <uppermultiplicity>255</uppermultiplicity>
+        <paramobject type="dataobject" data="text">
+          <name>TransmitFunction</name>
+          <description>Transmit Function specific to the channel</description>
+          <lowermultiplicity>1</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+        </paramobject>
+        <paramobject type="dataobject" data="enum">
+          <name>DataTransferMethod</name>
+          <description>Data Transfer Method</description>
+          <lowermultiplicity>1</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <values>
+            <item value="1">Bytes</item>
+            <item value="2">String</item>
+          </values>
+        </paramobject>
+        <paramobject type="dataobject" data="integer">
+          <name>TransmitBufferSize</name>
+          <description>Transmit Buffer Size. Set this value based on the maximum DLC in the channel and data transfer methods.</description>
+          <lowermultiplicity>1</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <default>144</default>
+          <min>7</min>
+          <max>1024</max>
+        </paramobject>
+        <paramobject type="dataobject" data="text">
+          <name>ErrorNotification</name>
+          <description>Callback function to notify errors</description>
+          <lowermultiplicity>1</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+        </paramobject>
+        <paramobject type="dataobject" data="boolean">
+          <name>EnableDynamicDataLength</name>
+          <description>Enables or Disables Dynamic Data Length feature for the messages</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <default>False</default>
+        </paramobject>
+        <paramobject type="dataobject" data="integer">
+          <name>MaxDynamicDataLength</name>
+          <description>Maximum Data Length for the Messages with Dynamic Data Length (Length configured as 0)</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <default>32</default>
+          <min>1</min>
+          <max>64</max>
+        </paramobject>
+        <paramobject type="dataobject" data="boolean">
+          <name>EnableAggregation</name>
+          <description>Enable Aggregation of Transmit messages in the channel</description>
+          <lowermultiplicity>1</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+        </paramobject>
+        <paramobject type="dataobject" data="integer">
+          <name>AggregationTxCycle</name>
+          <description>Aggregation Transmit Cycle Time (in ms). After this time, All aggregated messages will be triggered for transmission. This parameter is valid only when EnableAggregation is set to TRUE.</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <default>1000</default>
+          <min>100</min>
+          <max>65535</max>
+        </paramobject>
+        <paramobject type="dataobject" data="integer">
+          <name>AggregationBufferLimit</name>
+          <description>Channel data buffer limit to trigger the transmission of the aggregated messages. This parameter is valid only when the EnableAggregation is set to TRUE. This value shall be chosen based on the TransmitBufferSize of the channel.</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <default>0</default>
+          <min>1</min>
+          <max>65535</max>
+        </paramobject>
+        <paramobject type="dataobject" data="text">
+          <name>RequestReceptionFunction</name>
+          <description>Channel specific function name to request the reception of a frame in the bus. This is useful for I2C Master Reception, UART RTS, CAN Remote Request etc. If configured, this will enable the ComIf Request Reception feature.</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+        </paramobject>
+        <paramobject type="dataobject" data="integer">
+          <name>RequestReceptionTimeout</name>
+          <description>Timeout time (in ms) for the reception request is placed, but not received. After this timeout time, the requested message will be ignored and next message will be processed.</description>
+          <lowermultiplicity>1</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <default>100</default>
+          <min>10</min>
+          <max>65535</max>
+        </paramobject>
+        <paramobject type="listcontainer">
+          <name>TxMessages</name>
+          <description>ComIf Transmit Messages</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <paramobject type="paramcontainer">
+            <name>TxMessage</name>
+            <description>ComIf Transmit Message</description>
+            <lowermultiplicity>0</lowermultiplicity>
+            <uppermultiplicity>1</uppermultiplicity>
+            <paramobject type="dataobject" data="integer">
+              <name>ID</name>
+              <description>ID of the Message</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+              <default>0</default>
+              <min>10</min>
+              <max>255</max>
+            </paramobject>
+            <paramobject type="dataobject" data="integer">
+              <name>Length</name>
+              <description>Data Length of the Message</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+              <default>8</default>
+              <min>1</min>
+              <max>64</max>
+            </paramobject>
+            <paramobject type="dataobject" data="text">
+              <name>TxConfCallback</name>
+              <description>Transmit Confirmation Callback function for the Message. Once data is transmitted successfully, this function will be called.</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+            </paramobject>
+            <paramobject type="dataobject" data="text">
+              <name>TxCallback</name>
+              <description>Transmit Callback function for the Message. This function will be called before the transmission of the message.</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+            </paramobject>
+            <paramobject type="dataobject" data="enum">
+              <name>ChecksumLength</name>
+              <description>Checksum Length</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+              <values>
+                <item value="1">1</item>
+                <item value="2">2</item>
+                <item value="3">3</item>
+                <item value="4">4</item>
+              </values>
+            </paramobject>
+            <paramobject type="dataobject" data="boolean">
+              <name>EnableAggregation</name>
+              <description>Enables Aggregation of this message. The message will be sent on periodic call based on the channel availability.</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+            </paramobject>
+          </paramobject>
+        </paramobject>
+        <paramobject type="listcontainer">
+          <name>RxMessages</name>
+          <description>ComIf Receive Messages</description>
+          <lowermultiplicity>0</lowermultiplicity>
+          <uppermultiplicity>1</uppermultiplicity>
+          <paramobject type="paramcontainer">
+            <name>RxMessage</name>
+            <description>ComIf Receive Message</description>
+            <lowermultiplicity>0</lowermultiplicity>
+            <uppermultiplicity>1</uppermultiplicity>
+            <paramobject type="dataobject" data="integer">
+              <name>ID</name>
+              <description>ID of the Message</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+              <default>0</default>
+              <min>10</min>
+              <max>255</max>
+            </paramobject>
+            <paramobject type="dataobject" data="integer">
+              <name>Length</name>
+              <description>Data Length of the Message</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+              <default>8</default>
+              <min>1</min>
+              <max>64</max>
+            </paramobject>
+            <paramobject type="dataobject" data="text">
+              <name>RxCallback</name>
+              <description>Receive Callback for a Com Message. Once this Message is received in the Com layer, then this function will be called.</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+            </paramobject>
+            <paramobject type="dataobject" data="enum">
+              <name>ChecksumLength</name>
+              <description>Checksum Length</description>
+              <lowermultiplicity>1</lowermultiplicity>
+              <uppermultiplicity>1</uppermultiplicity>
+              <values>
+                <item value="1">1</item>
+                <item value="2">2</item>
+                <item value="3">3</item>
+                <item value="4">4</item>
+                <item value="0">0</item>
+              </values>
+            </paramobject>
+          </paramobject>
+        </paramobject>
+      </paramobject>
+    </paramobject>
+  </paramobject>
+  <paramobject type="paramcontainer">
+    <name>General</name>
+    <description>ComIf General Container</description>
+    <lowermultiplicity>1</lowermultiplicity>
+    <uppermultiplicity>1</uppermultiplicity>
+    <paramobject type="dataobject" data="enum">
+      <name>InputMethod</name>
+      <description>Method of Com layer execution</description>
+      <lowermultiplicity>1</lowermultiplicity>
+      <uppermultiplicity>1</uppermultiplicity>
+      <values>
+        <item value="1">Interrupt</item>
+        <item value="2">Polling</item>
+        <item value="3">Accumulated</item>
+      </values>
+    </paramobject>
+    <paramobject type="dataobject" data="integer">
+      <name>TxMainFunctionTimePeriod</name>
+      <description>ComIf Tx Main Function Time Period in ms</description>
+      <lowermultiplicity>1</lowermultiplicity>
+      <uppermultiplicity>1</uppermultiplicity>
+      <default>10</default>
+      <min>1</min>
+      <max>255</max>
+    </paramobject>
+    <paramobject type="dataobject" data="integer">
+      <name>RxMainFunctionTimePeriod</name>
+      <description>ComIf Rx Main Function Time Period in ms</description>
+      <lowermultiplicity>1</lowermultiplicity>
+      <uppermultiplicity>1</uppermultiplicity>
+      <default>10</default>
+      <min>1</min>
+      <max>255</max>
+    </paramobject>
+  </paramobject>
+</paramdef>
