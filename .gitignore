@@ -1,0 +1,9 @@
+/c#/.vs/**/*.*
+/c#/comif/obj/**/*.*
+/c#/comif/bin/**/*.*
+!/c#/comif/bin/**/comif.dll
+/tools/ComIfSerial/ComIfSerial/.vs/**/*.*
+/tools/ComIfSerial/ComIfSerial/obj/**/*.*
+/tools/ComIfSerial/ComIfSerial/bin/**/*.*
+!/tools/ComIfSerial/ComIfSerial/bin/Debug/*.exe
+!/tools/ComIfSerial/ComIfSerial/bin/Debug/*.dll
