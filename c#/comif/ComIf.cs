@@ -27,20 +27,20 @@ namespace ComIf
 
     public enum ErrorCodes
     {
-        COMIF_EC_NO_ERROR               = 0,
-        COMIF_EC_CHANNEL_BUSY           = 1,
-        COMIF_EC_REQUEST_TIMEOUT        = 2,
-        COMIF_EC_CHANNEL_NOT_AVAILABLE  = 3,
-        COMIF_EC_FORM_ERROR             = 11,
-        COMIF_EC_DELIMITER_ERROR        = 12,
+        COMIF_EC_NO_ERROR               = 0, // Not Used
+        COMIF_EC_CHANNEL_BUSY           = 1, // Not Used
+        COMIF_EC_REQUEST_TIMEOUT        = 2, // Not Used
+        COMIF_EC_CHANNEL_NOT_AVAILABLE  = 3, // Not Used
+        COMIF_EC_FORM_ERROR             = 11, // Not Used
+        COMIF_EC_DELIMITER_ERROR        = 12, // Not Used
         COMIF_EC_INVALID_ID             = 13,
         COMIF_EC_INVALID_DLC            = 14,
         COMIF_EC_INVALID_CHK            = 15,
         COMIF_EC_INVALID_MSG            = 16,
-        COMIF_EC_INVALID_CHANNEL        = 17,
-        COMIF_EC_BUFFER_OVERFLOW        = 18,
-        COMIF_EC_TRANSMISSION_ABORTED   = 19,
-        COMIF_EC_GENERIC_ERROR          = 20
+        COMIF_EC_INVALID_CHANNEL        = 17, // Not Used
+        COMIF_EC_BUFFER_OVERFLOW        = 18, // Not Used
+        COMIF_EC_TRANSMISSION_ABORTED   = 19, // Not Used
+        COMIF_EC_GENERIC_ERROR          = 20 // Not Used
     }
 
     public static class CommonAPIs
@@ -86,7 +86,7 @@ namespace ComIf
         /* Basic Attributes */
         public byte ID = 0;
         public byte Length = 0;
-        public byte[] Data = new byte[65]; // 1 byte including Checksum
+        public byte[] Data = new byte[256]; // 1 byte including Checksum
 
         public TxMessage(byte id, byte length)
         {
@@ -100,7 +100,7 @@ namespace ComIf
         /* Basic Attributes */
         public byte ID = 0;
         public byte Length = 0;
-        public byte[] Data = new byte[65]; // 1 byte including Checksum
+        public byte[] Data = new byte[256]; // 1 byte including Checksum
 
         public bool EnableDynamicLength = false;
 
@@ -153,26 +153,6 @@ namespace ComIf
             NotifyError = errorNotification;
         }
 
-        public ReturnValue RegisterTxMessage(TxMessage txMessage)
-        {
-            if(txMessage != null)
-            {
-                foreach (TxMessage msg in TxMessages)
-                {
-                    if (msg.ID == txMessage.ID)
-                    {
-                        return ReturnValue.NOK;
-                    }
-                }
-
-                TxMessages.Add(txMessage);
-
-                return ReturnValue.OK;
-            }
-
-            return ReturnValue.NOK;
-        }
-
         public ReturnValue RegisterRxMessage(RxMessage rxMessage)
         {
             if (rxMessage != null)
@@ -202,11 +182,16 @@ namespace ComIf
 
             List<byte> data = new List<byte>();
             UInt16 Checksum = 0;
-            UInt16 FrameLength = 1 + 1 + 1 + 1; // STX, ID, DLC, ETX
+            UInt16 FrameLength = 0;
 
             data.Add((byte)Delimiters.STX);
+            FrameLength++;
+
             data.Add(txMessage.ID);
+            FrameLength++;
+
             data.Add(txMessage.Length);
+            FrameLength++;
 
             for (int i = 0; i < txMessage.Length; i++)
             {
