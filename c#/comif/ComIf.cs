@@ -145,7 +145,7 @@ namespace ComIf
         private int RxMsgIndex = INVALID_INDEX;
         private int RxMsgLength = 0;
 
-        public Channel(string channelName, ChannelType channelType, TransmitFunction transmitFunction, ErrorNotification errorNotification, UInt16 TxBufferSize = 1024)
+        public Channel(string channelName, ChannelType channelType, TransmitFunction transmitFunction, ErrorNotification errorNotification)
         {
             Name = channelName;
             DataTxfrType = channelType;
