@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">ComIf Serial Example</string>
+    <string name="serial_settings">Serial Settings</string>
+    <string name="console">Console</string>
+    <string name="send">Send</string>
+    <string name="baud_rate">Baud Rate</string>
+    <string name="set">SET</string>
+    <string name="send_message_id">Send Message ID</string>
+    <string name="data_length">Data Length</string>
+    <string name="data_to_be_sent">Data to be Sent</string>
+    <string name="refresh">Refresh</string>
+    <string name="comif_data">ComIf Data</string>
+</resources>
