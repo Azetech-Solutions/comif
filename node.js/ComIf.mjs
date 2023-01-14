@@ -437,15 +437,13 @@ export class Channel
     RxIndication_String(DataString)
     {
         // it is assumed that the rx indication shall be in the form of ASCII string
-        var buf = new Buffer.from(DataString, 'ascii');
-
-        var Length = buf.length / 2;
+        var Length = DataString.length / 2;
         var uintArray = new Uint8Array(Length); // Convert into a uint8 array
 
-        for(var i = 0, index = 0; i < buf.length; i++, index++)
+        for(var i = 0, index = 0; i < DataString.length; i++, index++)
         {
-            var val = ((buf.charCodeAt(i) - 0x30) << 4);
-            val |= (buf.charCodeAt([i + 1]) - 0x30);
+            var val = ((DataString.charCodeAt(i) - 0x30) << 4);
+            val |= (DataString.charCodeAt([i + 1]) - 0x30);
             i++;
             uintArray[index] = val;
         }

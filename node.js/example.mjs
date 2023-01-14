@@ -30,6 +30,11 @@ export const handler = async(event) => {
     // Sending an Rx Message to the channel
     var RxDataBytes = [0x7B, 0x13, 0x08, 1, 2, 3, 4, 5, 6, 7, 8, 0xDC, 0x7D ];
     channel.RxIndication_Bytes(RxDataBytes);
+
+    // Sending an Rx Message to the channel
+    var RxDataString = "7;13080102030405060708=<7=";
+    channel.RxIndication_String(RxDataString);
+
     
     const response = {
         statusCode: 200,
