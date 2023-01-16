@@ -66,11 +66,17 @@ export class TxMessage
     ID = 0;
     Length = 0;
     Data = new Uint8Array(256); // 1 byte including Checksum
+    
+    IsTxScheduled = false;
+    
+    TxCbk = null;
 
-    constructor(id, length)
+    constructor(id, length, txCallback)
     {
         this.ID = id;
         this.Length = length;
+        this.TxCbk = txCallback;
+        this.IsTxScheduled = false;
     }
 }
 
@@ -107,7 +113,11 @@ export class Channel
     NotifyError = null;
     TxMessages = [];
     RxMessages = [];
-
+    
+    NodeData = null;
+    
+    RequiresDatabaseUpdate = false;
+    
     /* Internal Flags */
     #Delimit = false;
     #IsReceiving = false;
@@ -124,13 +134,17 @@ export class Channel
         this.NotifyError = errorNotification;
     }
 
+    SetNodeData(nodeData) {
+        this.NodeData = nodeData;
+    }
+
     RegisterRxMessage(rxMessage)
     {
         if (rxMessage != null)
         {
-            for (var msg in this.RxMessages)
+            for (var i = 0; i < this.RxMessages.length; i++)
             {
-                if (msg.ID == rxMessage.ID)
+                if (this.RxMessages[i].ID == rxMessage.ID)
                 {
                     return RET_NOK;
                 }
@@ -142,6 +156,69 @@ export class Channel
         }
 
         return RET_NOK;
+    }
+
+    RegisterTxMessage(txMessage)
+    {
+        if (txMessage != null)
+        {
+            for (var i = 0; i < this.TxMessages.length; i++)
+            {
+                if (this.TxMessages[i].ID == txMessage.ID)
+                {
+                    return RET_NOK;
+                }
+            }
+
+            this.TxMessages.push(txMessage);
+
+            return RET_OK;
+        }
+
+        return RET_NOK;
+    }
+
+    GetTxMessageInstance(ID)
+    {
+        for(var i = 0; i < this.TxMessages.length; i++)
+        {
+            if (this.TxMessages[i].ID == ID)
+            {
+                return this.TxMessages[i];
+            }
+        }
+        
+        return null;
+    }
+
+    GetRxMessageInstance(ID)
+    {
+        for (var i = 0; i < this.RxMessages.length; i++)
+        {
+            if (this.RxMessages[i].ID == ID)
+            {
+                return this.RxMessages[i];
+            }
+        }
+        
+        return null;
+    }
+
+    TriggerTransmitForScheduledMessages()
+    {
+        var IsAtleastOneMessageScheduled = false;
+
+        for(var i = 0; i < this.TxMessages.length; i++)
+        {
+            if(this.TxMessages[i].IsTxScheduled) {
+                // If Tx Is Scheduled, then trigger the tranmission
+                this.Transmit(this.TxMessages[i]);
+                
+                IsAtleastOneMessageScheduled = true;
+            }
+        }
+        
+        return IsAtleastOneMessageScheduled;
     }
 
     Transmit(txMessage)
@@ -163,6 +240,10 @@ export class Channel
 
         data[FrameLength] = txMessage.Length;
         FrameLength++;
+
+        if(txMessage.TxCbk != null) {
+            txMessage.TxCbk(txMessage.Data, this);
+        }
 
         for (var i = 0; i < txMessage.Length; i++)
         {
@@ -322,7 +403,7 @@ export class Channel
                             /* Send RxCbk */
                             if(RxMsg.RxCbk != null)
                             {
-                                RxMsg.RxCbk(DataLength, RxMsg.Data);
+                                RxMsg.RxCbk(DataLength, RxMsg.Data, this);
                             }
 
                             /* Reset the Rx Info as No Error */
