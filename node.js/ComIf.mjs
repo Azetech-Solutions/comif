@@ -294,6 +294,9 @@ export class Channel
             this.TriggerTransmit(FrameLength, data);
         }
 
+        // Once Triggered the transmission, clear the flag
+        txMessage.IsTxScheduled = false;
+
         return RET_OK;
     }
 

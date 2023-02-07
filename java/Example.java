@@ -49,7 +49,7 @@ public class Example
                                             );
 
         // Creating and Sending a Tx Message
-        Channel.TxMessage txMessage = numberChannel.new TxMessage((byte)0x12, (byte)8);
+        Channel.TxMessage txMessage = numberChannel.new TxMessage((byte)0x12, (byte)8, null);
         numberChannel.Transmit(txMessage);
 
         // Creating and Registering an Rx Message

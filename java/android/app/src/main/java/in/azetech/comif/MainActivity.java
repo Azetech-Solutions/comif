@@ -211,9 +211,9 @@ public class MainActivity extends AppCompatActivity implements SerialInputOutput
                 String hexString = txDataBytes.getText().toString().toUpperCase().replace(" ", "");
                 byte[] dataBytes = hexStringToByteArray(hexString);
 
-                Channel.TxMessage txMessage = numberChannel.new TxMessage((byte)id, (byte)dlc);
-                System.arraycopy(dataBytes, 0, txMessage.Data, 0, dataBytes.length);
-                numberChannel.Transmit(txMessage);
+                //TxMessage txMessage = new TxMessage((byte)id, (byte)dlc);
+                //System.arraycopy(dataBytes, 0, txMessage.Data, 0, dataBytes.length);
+                //numberChannel.Transmit(txMessage);
             }
         });
 

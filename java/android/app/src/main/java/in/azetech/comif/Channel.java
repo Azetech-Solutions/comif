@@ -82,51 +82,6 @@ public class Channel
         }
     }
 
-    public class TxMessage
-    {
-        /* Basic Attributes */
-        public byte ID = 0;
-        public byte Length = 0;
-        public byte[] Data = new byte[256]; // 1 byte including Checksum
-
-        public TxMessage(byte id, byte length)
-        {
-            ID = id;
-            Length = length;
-        }
-    }
-
-    public static class RxMessage
-    {
-        /* Basic Attributes */
-        public byte ID = 0;
-        public byte Length = 0;
-        public byte[] Data = new byte[256]; // 1 byte including Checksum
-
-        public boolean EnableDynamicLength = false;
-
-        /* Status Flags */
-        public boolean ReceptionStarted = false; // If set, then the message has been started receiving
-        public boolean NewMessageReceived = false; // If set, then the message has been received completely and waiting for the RxCbk to be called
-        public boolean ErrorInReception = false; // If set, then the message has been received, but there is an error in reception
-        public byte CurRxngIdx = 0;
-
-        /* Interface */
-        public interface RxCallbackListener
-        {
-            public void RxCallback(byte Length, byte[] Data);
-        }
-
-        public RxCallbackListener RxCbk = null;
-
-        public RxMessage(byte id, byte length, RxCallbackListener rxCallback)
-        {
-            ID = id;
-            Length = length;
-            RxCbk = rxCallback;
-        }
-    }
-
     /***********************************************************************/
     /***********************************************************************/
 
@@ -185,6 +140,69 @@ public class Channel
         return ReturnValue.NOK;
     }
 
+    public ReturnValue RegisterTxMessage(TxMessage txMessage)
+    {
+        if (txMessage != null)
+        {
+            for (TxMessage msg : TxMessages)
+            {
+                if (msg.ID == txMessage.ID)
+                {
+                    return ReturnValue.NOK;
+                }
+            }
+
+            TxMessages.add(txMessage);
+
+            return ReturnValue.OK;
+        }
+
+        return ReturnValue.NOK;
+    }
+
+    public TxMessage GetTxMessageInstance(byte ID)
+    {
+        for (TxMessage msg : TxMessages)
+        {
+            if (msg.ID == ID)
+            {
+                return msg;
+            }
+        }
+        
+        return null;
+    }
+
+    public RxMessage GetRxMessageInstance(byte ID)
+    {
+        for (RxMessage msg : RxMessages)
+        {
+            if (msg.ID == ID)
+            {
+                return msg;
+            }
+        }
+        
+        return null;
+    }
+
+    public boolean TriggerTransmitForScheduledMessages()
+    {
+        boolean IsAtleastOneMessageScheduled = false;
+
+        for (TxMessage msg : TxMessages)
+        {
+            if(msg.IsTxScheduled) {
+                // If Tx Is Scheduled, then trigger the tranmission
+                Transmit(msg);
+                
+                IsAtleastOneMessageScheduled = true;
+            }
+        }
+        
+        return IsAtleastOneMessageScheduled;
+    }
+
     public ReturnValue Transmit(TxMessage txMessage)
     {
         if ((txMessage == null) || (TriggerTransmit == null))
@@ -195,6 +213,9 @@ public class Channel
         List<Byte> data = new ArrayList<Byte>();
         short Checksum = 0;
         short FrameLength = 0;
+
+        // Give a Tx Callback to get the updated data
+        txMessage.TxCallback(txMessage);
 
         data.add((byte)Delimiters.STX);
         FrameLength++;
@@ -252,6 +273,9 @@ public class Channel
         {
             TriggerTransmit.TransmitFunction(FrameLength, data.toArray(new Byte[data.size()]));
         }
+
+        // Once Triggered the transmission, clear the flag
+        txMessage.IsTxScheduled = false;
 
         return ReturnValue.OK;
     }
@@ -361,10 +385,7 @@ public class Channel
                             /* A Valid  Message is being received */
 
                             /* Send RxCbk */
-                            if(RxMsg.RxCbk != null)
-                            {
-                                RxMsg.RxCbk.RxCallback((byte)DataLength, RxMsg.Data);
-                            }
+                            RxMsg.RxCallback((byte)DataLength, RxMsg.Data);
 
                             /* Reset the Rx Info as No Error */
                             ResetRxInfo(false);

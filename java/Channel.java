@@ -89,10 +89,22 @@ public class Channel
         public byte Length = 0;
         public byte[] Data = new byte[256]; // 1 byte including Checksum
 
-        public TxMessage(byte id, byte length)
+        public boolean IsTxScheduled = false;
+
+        /* Interface */
+        public interface TxCallbackListener
+        {
+            public void TxCallback(TxMessage txMessage);
+        }
+
+        public TxCallbackListener TxCbk = null;
+
+        public TxMessage(byte id, byte length, TxCallbackListener txCallback)
         {
             ID = id;
             Length = length;
+            TxCbk = txCallback;
+            IsTxScheduled = false;
         }
     }
 
@@ -185,6 +197,69 @@ public class Channel
         return ReturnValue.NOK;
     }
 
+    public ReturnValue RegisterTxMessage(TxMessage txMessage)
+    {
+        if (txMessage != null)
+        {
+            for (TxMessage msg : TxMessages)
+            {
+                if (msg.ID == txMessage.ID)
+                {
+                    return ReturnValue.NOK;
+                }
+            }
+
+            TxMessages.add(txMessage);
+
+            return ReturnValue.OK;
+        }
+
+        return ReturnValue.NOK;
+    }
+
+    public TxMessage GetTxMessageInstance(byte ID)
+    {
+        for (TxMessage msg : TxMessages)
+        {
+            if (msg.ID == ID)
+            {
+                return msg;
+            }
+        }
+        
+        return null;
+    }
+
+    public RxMessage GetRxMessageInstance(byte ID)
+    {
+        for (RxMessage msg : RxMessages)
+        {
+            if (msg.ID == ID)
+            {
+                return msg;
+            }
+        }
+        
+        return null;
+    }
+
+    public boolean TriggerTransmitForScheduledMessages()
+    {
+        boolean IsAtleastOneMessageScheduled = false;
+
+        for (TxMessage msg : TxMessages)
+        {
+            if(msg.IsTxScheduled) {
+                // If Tx Is Scheduled, then trigger the tranmission
+                Transmit(msg);
+                
+                IsAtleastOneMessageScheduled = true;
+            }
+        }
+        
+        return IsAtleastOneMessageScheduled;
+    }
+
     public ReturnValue Transmit(TxMessage txMessage)
     {
         if ((txMessage == null) || (TriggerTransmit == null))
@@ -195,6 +270,12 @@ public class Channel
         List<Byte> data = new ArrayList<Byte>();
         short Checksum = 0;
         short FrameLength = 0;
+
+        // Give a Tx Callback to get the updated data
+        if(txMessage.TxCbk != null)
+        {
+            txMessage.TxCbk.TxCallback(txMessage);
+        }
 
         data.add((byte)Delimiters.STX);
         FrameLength++;
@@ -252,6 +333,9 @@ public class Channel
         {
             TriggerTransmit.TransmitFunction(FrameLength, data.toArray(new Byte[data.size()]));
         }
+
+        // Once Triggered the transmission, clear the flag
+        txMessage.IsTxScheduled = false;
 
         return ReturnValue.OK;
     }
