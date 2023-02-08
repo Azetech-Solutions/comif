@@ -1,6 +1,6 @@
-package in.azetech.comif.msgs;
+package ComIf.msgs;
 
-import in.azetech.comif.RxMessage;
+import ComIf.RxMessage;
 
 class RxMsg01 extends RxMessage {
 

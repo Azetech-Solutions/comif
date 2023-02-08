@@ -182,6 +182,32 @@ public class Channel
                 return msg;
             }
         }
+
+        return null;
+    }
+
+    public TxMessage GetTxMessageInstance(String Name)
+    {
+        for (TxMessage msg : TxMessages)
+        {
+            if (msg.Name.equals(Name))
+            {
+                return msg;
+            }
+        }
+
+        return null;
+    }
+
+    public RxMessage GetRxMessageInstance(String Name)
+    {
+        for (RxMessage msg : RxMessages)
+        {
+            if (msg.Name.equals(Name))
+            {
+                return msg;
+            }
+        }
         
         return null;
     }
@@ -324,7 +350,6 @@ public class Channel
 
         return retval;
     }
-
 
     public ReturnValue RxIndication(byte DataByte)
     {

@@ -82,63 +82,6 @@ public class Channel
         }
     }
 
-    public class TxMessage
-    {
-        /* Basic Attributes */
-        public byte ID = 0;
-        public byte Length = 0;
-        public byte[] Data = new byte[256]; // 1 byte including Checksum
-
-        public boolean IsTxScheduled = false;
-
-        /* Interface */
-        public interface TxCallbackListener
-        {
-            public void TxCallback(TxMessage txMessage);
-        }
-
-        public TxCallbackListener TxCbk = null;
-
-        public TxMessage(byte id, byte length, TxCallbackListener txCallback)
-        {
-            ID = id;
-            Length = length;
-            TxCbk = txCallback;
-            IsTxScheduled = false;
-        }
-    }
-
-    public class RxMessage
-    {
-        /* Basic Attributes */
-        public byte ID = 0;
-        public byte Length = 0;
-        public byte[] Data = new byte[256]; // 1 byte including Checksum
-
-        public boolean EnableDynamicLength = false;
-
-        /* Status Flags */
-        public boolean ReceptionStarted = false; // If set, then the message has been started receiving
-        public boolean NewMessageReceived = false; // If set, then the message has been received completely and waiting for the RxCbk to be called
-        public boolean ErrorInReception = false; // If set, then the message has been received, but there is an error in reception
-        public byte CurRxngIdx = 0;
-
-        /* Interface */
-        public interface RxCallbackListener
-        {
-            public void RxCallback(byte Length, byte[] Data);
-        }
-
-        public RxCallbackListener RxCbk = null;
-
-        public RxMessage(byte id, byte length, RxCallbackListener rxCallback)
-        {
-            ID = id;
-            Length = length;
-            RxCbk = rxCallback;
-        }
-    }
-
     /***********************************************************************/
     /***********************************************************************/
 
@@ -239,6 +182,32 @@ public class Channel
                 return msg;
             }
         }
+
+        return null;
+    }
+
+    public TxMessage GetTxMessageInstance(String Name)
+    {
+        for (TxMessage msg : TxMessages)
+        {
+            if (msg.Name.equals(Name))
+            {
+                return msg;
+            }
+        }
+
+        return null;
+    }
+
+    public RxMessage GetRxMessageInstance(String Name)
+    {
+        for (RxMessage msg : RxMessages)
+        {
+            if (msg.Name.equals(Name))
+            {
+                return msg;
+            }
+        }
         
         return null;
     }
@@ -272,10 +241,7 @@ public class Channel
         short FrameLength = 0;
 
         // Give a Tx Callback to get the updated data
-        if(txMessage.TxCbk != null)
-        {
-            txMessage.TxCbk.TxCallback(txMessage);
-        }
+        txMessage.TxCallback(txMessage);
 
         data.add((byte)Delimiters.STX);
         FrameLength++;
@@ -385,7 +351,6 @@ public class Channel
         return retval;
     }
 
-
     public ReturnValue RxIndication(byte DataByte)
     {
         ReturnValue retval = ReturnValue.OK;
@@ -445,10 +410,7 @@ public class Channel
                             /* A Valid  Message is being received */
 
                             /* Send RxCbk */
-                            if(RxMsg.RxCbk != null)
-                            {
-                                RxMsg.RxCbk.RxCallback((byte)DataLength, RxMsg.Data);
-                            }
+                            RxMsg.RxCallback((byte)DataLength, RxMsg.Data);
 
                             /* Reset the Rx Info as No Error */
                             ResetRxInfo(false);
