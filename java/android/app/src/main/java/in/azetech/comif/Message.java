@@ -48,13 +48,38 @@ public abstract class Message {
             int Mask = ComIf_GetBitMaskValue(signal.Length);
 
             // TODO: Implement the correct logic
-            Data[BytePosition] = (byte)((value & Mask) << BitPostion);
+            Data[BytePosition] &= ~(Mask << BitPostion);
+            Data[BytePosition] |= (byte)((value & Mask) << BitPostion);
         }
         else {
             retval = false;
         }
 
         return retval;
+    }
+
+    public int GetSignalFromBuffer(String Name) {
+        int value = 0;
+        Signal signal = null;
+
+        for (Signal mySignal : Signals) {
+            if (mySignal.Name.equals(Name)) {
+                signal = mySignal;
+                break;
+            }
+        }
+
+        if(signal != null) {
+            byte BytePosition = (byte)(signal.StartBitPosition / 8);
+            byte BitPostion = (byte)(signal.StartBitPosition % 8);
+
+            int Mask = ComIf_GetBitMaskValue(signal.Length);
+
+            // TODO: Implement the correct logic
+            value = (int)((Data[BytePosition] & (Mask << BitPostion)) >> BitPostion);
+        }
+
+        return value;
     }
 
     private int ComIf_GetBitMaskValue(int BitLength)

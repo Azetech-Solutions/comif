@@ -540,15 +540,6 @@ public class Channel
 
                 i += 2; // Move to next step
                 Length -= 2;
-
-                /* If the String has an odd number length, then send the last byte also and exit */
-                /* This should not actually happen, but still sent to record the exact error instead of ignoring */
-                if (arr[ i + 1] == '\0')
-                {
-                    Data = (byte)((arr[i] - 0x30) << 4);
-                    RxIndication(Data);
-                    break;
-                }
             }
 
             return ReturnValue.OK;

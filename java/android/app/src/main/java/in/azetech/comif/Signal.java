@@ -9,19 +9,50 @@ public class Signal {
         INT16,
         UINT16,
         INT32,
-        UINT32
+        UINT32;
         // UINT8_ARRAY --> UINT8 Array data type is not supported in Android
+
+        public static DataType fromName(String Name) {
+            DataType type = UINT32;
+            switch (Name) {
+                case "INT8" : type = INT8; break;
+                case "UINT8" : type = UINT8; break;
+                case "INT16" : type = INT16; break;
+                case "UINT16" : type = UINT16; break;
+                case "INT32" : type = INT32; break;
+                default: break;
+            }
+            return type;
+        }
     }
 
     public enum TransferPropertyType {
         None,
         OnChange,
-        OnUpdate
+        OnUpdate;
+
+        public static TransferPropertyType fromName(String Name) {
+            TransferPropertyType propertyType = None;
+
+            switch (Name) {
+                case "OnChange" : propertyType = OnChange; break;
+                case "OnUpdate" : propertyType = OnUpdate; break;
+            }
+
+            return propertyType;
+        }
     }
 
     public enum EndiannessType {
         Big_Endian,
-        Little_Endian
+        Little_Endian;
+
+        public static EndiannessType fromName(String Name) {
+            if(Name.toUpperCase().equals("LITTLE")) {
+                return Little_Endian;
+            }
+            return Big_Endian;
+        }
     }
 
     /* Basic Attributes */
